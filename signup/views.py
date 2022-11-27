@@ -1,6 +1,9 @@
 from django.shortcuts import render
 from django.contrib.auth.hashers import make_password
 import mysql.connector as sql
+import jwt,json
+from rest_framework import views
+from rest_framework.response import Response
 
 fn=''
 ln=''
@@ -24,9 +27,9 @@ def signaction(request):
             if key=="email":
                 em=value
             if key=="password":
-                pwd = value
+                pwd = make_password(value)
         
-        c="insert into users Values('{}','{}','{}','{}','{}')".format(fn,ln,s,em,pwd)
+        c="insert into users1 Values('{}','{}','{}','{}','{}')".format(fn,ln,s,em,pwd)
         cursor.execute(c)
         m.commit()
 
