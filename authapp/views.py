@@ -2,21 +2,27 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+import json
 
 
-@require_http_methods(["POST"])
+@require_http_methods(["POST", "OPTIONS"])
 def create_user(request):
     reason = ''
     user = None
+    body = request.body.decode('utf-8')
+    body = json.loads(body)
 
     try:
-        username = request.POST['username']
-        password = request.POST['password']
-        email = request.POST['email']
+        username = body['username']
+        password = body['password']
+        email = body['email']
 
         user = User.objects.create_user(username, email, password)
     except:
-        reason = 'Integrity error!'
+        if username and password and email:
+            reason = 'Integrity error!'
+        else:
+            reason = 'Incorrect arguments!'
 
     if user is not None:
         return JsonResponse({
@@ -28,11 +34,22 @@ def create_user(request):
             'reason': reason
         })
 
-@require_http_methods(["POST"])
+@require_http_methods(["POST", "OPTIONS"])
 def login_user(request):
-    username = request.POST['username']
-    password = request.POST['password']
-    user = authenticate(request, username=username, password=password)
+    reason = 'Invalid Credentials!'
+    username = ''
+    password = ''
+    user = None
+    body = request.body.decode('utf-8')
+    body = json.loads(body)
+
+    try:
+        username = body['username']
+        password = body['password']
+        user = authenticate(request, username=username, password=password)
+    except:
+        reason = 'Incorrect Arguments!'
+
     if user is not None:
         login(request, user)
         return JsonResponse({
@@ -41,10 +58,10 @@ def login_user(request):
     else:
         return JsonResponse({
             'success': 'false',
-            'reason': 'Invalid Credentials!'
+            'reason': reason
         })
 
-@require_http_methods(["POST"])
+@require_http_methods(["POST", "OPTIONS"])
 def logout_user(request):
     logout(request)
     return JsonResponse({
